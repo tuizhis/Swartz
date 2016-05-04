@@ -1,0 +1,9 @@
+.vs/
+Swartz.Caching/obj/
+Swartz.Email/obj/
+Swartz.EntityFramework/obj/
+Swartz.Framework/obj/
+Swartz.Memcached/obj/
+Swartz.Redis/obj/
+Swartz.Users/obj/
+Swartz.WarmupStarter/obj/
