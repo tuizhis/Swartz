@@ -32,16 +32,29 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Web" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Caching\IVolatileProvider.cs" />
+    <Compile Include="Caching\IVolatileToken.cs" />
+    <Compile Include="Caching\Weak.cs" />
     <Compile Include="Exceptions\ExceptionExtensions.cs" />
+    <Compile Include="FileSystems\AppData\AppDataFolder.cs" />
+    <Compile Include="FileSystems\AppData\IAppDataFolder.cs" />
+    <Compile Include="FileSystems\AppData\IAppDataFolderRoot.cs" />
+    <Compile Include="FileSystems\VirtualPath\DefaultVirtualPathMonitor.cs" />
+    <Compile Include="FileSystems\VirtualPath\IVirtualPathMonitor.cs" />
     <Compile Include="IDependency.cs" />
+    <Compile Include="Logging\ILogger.cs" />
+    <Compile Include="Logging\NullLogger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\IClock.cs" />
     <Compile Include="SwartzCoreException.cs" />
     <Compile Include="SwartzException.cs" />
     <Compile Include="SwartzFatalException.cs" />
     <Compile Include="SwartzSecurityException.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

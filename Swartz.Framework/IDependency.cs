@@ -1,4 +1,7 @@
-﻿namespace Swartz
+﻿using Swartz;
+using Swartz.Logging;
+
+namespace Swartz
 {
     /// <summary>
     ///     Base interface for services that are instantiated per unit of work (i.e. web request).
@@ -27,5 +30,15 @@
     /// </summary>
     public interface ITransientDependency : IDependency
     {
+    }
+
+    public abstract class Component : IDependency
+    {
+        protected Component()
+        {
+            Logger = NullLogger.Instance;
+        }
+
+        public ILogger Logger { get; set; }
     }
 }
