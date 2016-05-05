@@ -81,6 +81,7 @@
     <Compile Include="SwartzException.cs" />
     <Compile Include="SwartzFatalException.cs" />
     <Compile Include="SwartzSecurityException.cs" />
+    <Compile Include="Validation\PathValidation.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
