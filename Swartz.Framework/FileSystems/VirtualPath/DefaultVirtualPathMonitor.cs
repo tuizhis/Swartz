@@ -17,6 +17,8 @@ namespace Swartz.FileSystems.VirtualPath
 
         public void Signal(string key, object value, CacheItemRemovedReason reason)
         {
+            var virtualPath = Convert.ToString(value);
+            
             
         }
 
