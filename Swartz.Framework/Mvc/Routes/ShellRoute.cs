@@ -165,7 +165,7 @@ namespace Swartz.Mvc.Routes
                     var environment = context.Items["owin.Environment"] as IDictionary<string, object> ??
                                       new Dictionary<string, object>();
 
-                    environment["orchard.Handler"] = new Func<Task>(async () =>
+                    environment["swartz.Handler"] = new Func<Task>(async () =>
                     {
                         await Task.Factory.FromAsync(
                             _httpAsyncHandler.BeginProcessRequest,

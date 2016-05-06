@@ -13,7 +13,7 @@ namespace Swartz.Mvc.Extensions
             {
                 return new RedirectResult(redirectUrl);
             }
-            return invalidUrlBehavior != null ? invalidUrlBehavior() : null;
+            return invalidUrlBehavior?.Invoke();
         }
 
         public static ActionResult RedirectLocal(this Controller controller, string redirectUrl)

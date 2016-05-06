@@ -3,6 +3,5 @@
     public interface IWebShell
     {
         void Activate();
-        void Terminate();
     }
 }

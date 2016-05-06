@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Swartz.FileSystems.AppData;
@@ -17,7 +16,7 @@ namespace Swartz.Environment.Configuration
             _appDataFolder = appDataFolder;
         }
 
-        IEnumerable<ShellSettings> IShellSettingsManager.LoadSettings()
+        ShellSettings IShellSettingsManager.LoadSettings()
         {
             return LoadSettingsInternal();
         }
@@ -38,18 +37,21 @@ namespace Swartz.Environment.Configuration
             Logger.Information("ShellSettings saved successfully; flagging tenant '{0}' for restart.", settings.Name);
         }
 
-        private IEnumerable<ShellSettings> LoadSettingsInternal()
+        private ShellSettings LoadSettingsInternal()
         {
-            var filePaths = _appDataFolder
+            var filePath = _appDataFolder
                 .ListDirectories("Sites")
                 .SelectMany(path => _appDataFolder.ListFiles(path))
                 .Where(
-                    path => string.Equals(Path.GetFileName(path), SettingsFileName, StringComparison.OrdinalIgnoreCase));
+                    path => string.Equals(Path.GetFileName(path), SettingsFileName, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(x => new FileInfo(x).LastWriteTimeUtc).FirstOrDefault();
 
-            foreach (var filePath in filePaths)
+            if (filePath != null)
             {
-                yield return ShellSettingsSerializer.ParseSettings(_appDataFolder.ReadFile(filePath));
+                return ShellSettingsSerializer.ParseSettings(_appDataFolder.ReadFile(filePath));
             }
+
+            return null;
         }
     }
 }

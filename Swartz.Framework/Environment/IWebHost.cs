@@ -1,7 +1,4 @@
-﻿using Swartz.Environment.Configuration;
-using Swartz.Environment.ShellBuilders;
-
-namespace Swartz.Environment
+﻿namespace Swartz.Environment
 {
     public interface IWebHost
     {
@@ -19,7 +16,5 @@ namespace Swartz.Environment
         ///     Called each time a request ends to deterministically commit and dispose outstanding activity
         /// </summary>
         void EndRequest();
-
-        ShellContext GetShellContext(ShellSettings shellSettings);
     }
 }
