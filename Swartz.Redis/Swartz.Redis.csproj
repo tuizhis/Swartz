@@ -30,11 +30,34 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="StackExchange.Redis, Version=1.0.316.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\StackExchange.Redis.1.0.488\lib\net45\StackExchange.Redis.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Caching\RedisCacheStorageProvider.cs" />
+    <Compile Include="Configuration\IRedisConnectionProvider.cs" />
+    <Compile Include="Configuration\RedisConnectionProvider.cs" />
+    <Compile Include="Extensions\RedisDatabaseExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Swartz.Caching\Swartz.Caching.csproj">
+      <Project>{f4dbc8e5-d57d-4e9a-b074-f6d164df500a}</Project>
+      <Name>Swartz.Caching</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Swartz.Framework\Swartz.Framework.csproj">
+      <Project>{72e016cf-cedc-446e-8b28-0d44187177be}</Project>
+      <Name>Swartz.Framework</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
