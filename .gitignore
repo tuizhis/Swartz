@@ -11,3 +11,11 @@ Swartz.WarmupStarter/Swartz.WarmupStarter.csproj.user
 packages/
 Swartz.Framework/bin/
 debug.log
+Swartz.Caching/bin/
+Swartz.Email/bin/
+Swartz.Memcached/bin/
+Swartz.OutputCache/bin/
+Swartz.OutputCache/obj/
+Swartz.Redis/bin/
+Swartz.Users/bin/
+Swartz.WarmupStarter/bin/

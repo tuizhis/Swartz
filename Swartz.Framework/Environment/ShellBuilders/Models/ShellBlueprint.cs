@@ -10,8 +10,6 @@ namespace Swartz.Environment.ShellBuilders.Models
         public IEnumerable<ControllerBlueprint> Controllers { get; set; }
 
         public IEnumerable<ControllerBlueprint> HttpControllers { get; set; }
-
-        public IEnumerable<ShellBlueprintItem> Modules { get; set; }
     }
 
     public class ShellBlueprintItem

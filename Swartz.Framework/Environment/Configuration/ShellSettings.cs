@@ -83,7 +83,7 @@ namespace Swartz.Environment.Configuration
                         return "1433";
                     }
                 }
-                return null;
+                return this["Port"];
             }
             set { this["Port"] = value; }
         }

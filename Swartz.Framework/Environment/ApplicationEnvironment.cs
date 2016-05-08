@@ -6,7 +6,7 @@ namespace Swartz.Environment
     {
         public string GetEnvironmentIdentifier()
         {
-            return $"{System.Environment.MachineName}:{Process.GetCurrentProcess().Id}";
+            return $"{System.Environment.MachineName}-{Process.GetCurrentProcess().Id}";
         }
     }
 }

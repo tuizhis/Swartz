@@ -198,8 +198,7 @@ namespace Swartz.Mvc
 
             /// <summary>
             ///     Create an anonymous ID the same way as ASP.NET would.
-            ///     Some users of an HttpRequestPlaceHolder object could expect this,
-            ///     say CookieCultureSelector from module Orchard.CulturePicker.
+            ///     Some users of an HttpRequestPlaceHolder object could expect this.
             /// </summary>
             public override string AnonymousID => Guid.NewGuid().ToString("D", CultureInfo.InvariantCulture);
 

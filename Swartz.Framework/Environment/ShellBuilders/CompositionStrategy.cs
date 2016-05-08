@@ -77,8 +77,7 @@ namespace Swartz.Environment.ShellBuilders
             {
                 Controllers = controllers,
                 HttpControllers = httpControllers,
-                Modules = modules,
-                Dependencies = dependencies
+                Dependencies = dependencies.Concat(modules)
             };
 
             return result;

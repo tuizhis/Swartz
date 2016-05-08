@@ -5,15 +5,13 @@ namespace Swartz.Owin
 {
     /// <summary>
     ///     An Owin middleware registration that can make changes to the Owin pipeline, like registering middlewares to be
-    ///     injected into the Orchard
-    ///     Owin pipeline.
+    ///     injected into the Owin pipeline.
     /// </summary>
     public class OwinMiddlewareRegistration
     {
         /// <summary>
         ///     Gets or sets the delegate that you can use to make changes to the Owin pipeline, like registering middlewares to be
-        ///     injected into
-        ///     the Orchard Owin pipeline.
+        ///     injected into the Owin pipeline.
         /// </summary>
         public Action<IAppBuilder> Configure { get; set; }
 

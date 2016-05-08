@@ -76,6 +76,7 @@ namespace Swartz.WarmupStarter
             {
                 throw new ApplicationException("Error during application initialization", _previousError);
             }
+            application.Context.Items["originalHttpContext"] = application.Context;
 
             // Only notify if the initialization has successfully completed
             if (_initializationResult != null)

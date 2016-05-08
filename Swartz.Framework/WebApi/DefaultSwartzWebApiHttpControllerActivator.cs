@@ -26,7 +26,7 @@ namespace Swartz.WebApi
 
             var controllerContext = new HttpControllerContext(_configuration, routeData, request);
 
-            // Determine the area name for the request, and fall back to stock orchard controllers
+            // Determine the area name for the request, and fall back to stock controllers
             var areaName = routeData.GetAreaName();
 
             // Service name pattern matches the identification strategy

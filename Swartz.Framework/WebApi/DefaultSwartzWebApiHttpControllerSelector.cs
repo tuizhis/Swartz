@@ -48,7 +48,7 @@ namespace Swartz.WebApi
         {
             var routeData = request.GetRouteData();
 
-            // Determine the area name for the request, and fall back to stock orchard controllers
+            // Determine the area name for the request, and fall back to stock controllers
             var areaName = routeData.GetAreaName();
 
             var controllerName = GetControllerName(request);

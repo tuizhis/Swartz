@@ -46,7 +46,7 @@ namespace Swartz.Mvc
         {
             var routeData = requestContext.RouteData;
 
-            // Determine the area name for the request, and fall back to stock orchard controllers
+            // Determine the area name for the request, and fall back to stock controllers
             var areaName = routeData.GetAreaName();
 
             // Service name pattern matches the identification strategy

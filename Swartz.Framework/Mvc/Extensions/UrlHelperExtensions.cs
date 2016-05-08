@@ -58,7 +58,7 @@ namespace Swartz.Mvc.Extensions
                 url = url.Substring(1);
             }
 
-            // app/foo/bar => /orchardlocal/foo/bar
+            // app/foo/bar => /app/foo/bar
             if (!url.StartsWith("/"))
             {
                 url = "/" + url;

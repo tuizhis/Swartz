@@ -28,7 +28,7 @@ namespace Swartz.Utility.Extensions
         /// <summary>
         ///     Returns the application root part of a request.
         /// </summary>
-        /// <example>http://localhost:3030/OrchardLocal</example>
+        /// <example>http://localhost:3030/App</example>
         /// <remarks>Prevents port number issues by using the client requested host</remarks>
         public static string ToApplicationRootUrlString(this HttpRequestBase request)
         {
@@ -40,7 +40,7 @@ namespace Swartz.Utility.Extensions
         /// <summary>
         ///     Returns the application root part of a request.
         /// </summary>
-        /// <example>http://localhost:3030/OrchardLocal</example>
+        /// <example>http://localhost:3030/App</example>
         /// <remarks>Prevents port number issues by using the client requested host</remarks>
         public static string ToApplicationRootUrlString(this HttpRequest request)
         {
@@ -52,7 +52,7 @@ namespace Swartz.Utility.Extensions
         /// <summary>
         ///     Returns the client requested url.
         /// </summary>
-        /// <example>http://localhost:3030/OrchardLocal/Admin/Blogs</example>
+        /// <example>http://localhost:3030/App/Admin/Blogs</example>
         /// <remarks>Prevents port number issues by using the client requested host</remarks>
         public static string ToUrlString(this HttpRequestBase request)
         {
@@ -62,7 +62,7 @@ namespace Swartz.Utility.Extensions
         /// <summary>
         ///     Returns the client requested url.
         /// </summary>
-        /// <example>http://localhost:3030/OrchardLocal/Admin/Blogs</example>
+        /// <example>http://localhost:3030/App/Admin/Blogs</example>
         /// <remarks>Prevents port number issues by using the client requested host</remarks>
         public static string ToUrlString(this HttpRequest request)
         {

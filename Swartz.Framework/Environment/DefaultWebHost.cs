@@ -73,6 +73,7 @@ namespace Swartz.Environment
                     HashAlgorithm = "HMACSHA256",
                     Host = "",
                     User = "",
+                    Password = "",
                     Database = "",
                     Port = "3306"
                 };
