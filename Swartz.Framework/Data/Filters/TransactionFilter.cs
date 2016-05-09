@@ -1,24 +1,20 @@
-﻿using System.Collections.Generic;
-using System.Web.Mvc;
+﻿using System.Web.Mvc;
 using IFilterProvider = Swartz.Mvc.Filters.IFilterProvider;
 
 namespace Swartz.Data.Filters
 {
     public class TransactionFilter : ActionFilterAttribute, IFilterProvider
     {
-        private readonly IEnumerable<ITransactionManager> _transactionManagers;
+        private readonly ITransactionManager _transactionManager;
 
-        public TransactionFilter(IEnumerable<ITransactionManager> transactionManagers)
+        public TransactionFilter(ITransactionManager transactionManager)
         {
-            _transactionManagers = transactionManagers;
+            _transactionManager = transactionManager;
         }
 
         public override void OnActionExecuted(ActionExecutedContext filterContext)
         {
-            foreach (var manager in _transactionManagers)
-            {
-                manager.Save();
-            }
+            _transactionManager.Save();
         }
     }
 }

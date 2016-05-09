@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 
 namespace Swartz.Data
 {
-    public interface IRepository<in TKey, TEntity, TType> where TKey : IEquatable<TKey> where TEntity : class
+    public interface IRepository<in TKey, TEntity> where TKey : IEquatable<TKey> where TEntity : class
     {
         IQueryable<TEntity> Table { get; }
 
@@ -29,7 +29,7 @@ namespace Swartz.Data
             int count);
     }
 
-    public interface IRepository<TEntity, TType> : IRepository<decimal, TEntity, TType> where TEntity : class
+    public interface IRepository<TEntity> : IRepository<decimal, TEntity> where TEntity : class
     {
     }
 }

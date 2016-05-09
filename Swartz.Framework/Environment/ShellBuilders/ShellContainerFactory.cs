@@ -5,7 +5,6 @@ using System.Web.Mvc;
 using Autofac;
 using Autofac.Core;
 using Autofac.Features.Indexed;
-using Swartz.Data;
 using Swartz.Environment.Configuration;
 using Swartz.Environment.ShellBuilders.Models;
 using Swartz.Events;
@@ -71,18 +70,6 @@ namespace Swartz.Environment.ShellBuilders
                         else if (typeof(ITransientDependency).IsAssignableFrom(interfaceType))
                         {
                             registration = registration.InstancePerDependency();
-                        }
-                    }
-
-                    if (typeof(ITransactionManager).IsAssignableFrom(item.Type))
-                    {
-                        var interfaces = item.Type.GetInterfaces();
-                        foreach (var interfaceType in interfaces)
-                        {
-                            if (interfaceType.GetInterface(typeof(ITransactionManager).Name) != null)
-                            {
-                                registration = registration.Named<ITransactionManager>(interfaceType.Name);
-                            }
                         }
                     }
 

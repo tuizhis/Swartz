@@ -3,23 +3,22 @@ using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using System.Linq.Expressions;
-using Autofac.Features.Indexed;
 
 namespace Swartz.Data
 {
-    public class Repository<TKey, TEntity, TType> : IRepository<TKey, TEntity, TType> where TKey : IEquatable<TKey>
+    public class Repository<TKey, TEntity> : IRepository<TKey, TEntity> where TKey : IEquatable<TKey>
         where TEntity : class
     {
         private readonly ITransactionManager _transactionManager;
 
-        public Repository(IIndex<string, IEnumerable<ITransactionManager>> transactionManagers)
+        public Repository(ITransactionManager transactionManager)
         {
-            _transactionManager = transactionManagers[typeof(TType).Name].First();
+            _transactionManager = transactionManager;
         }
 
         protected virtual DbContext DbContext => _transactionManager.GetContext();
 
-        private DbSet<TEntity> DbSet => DbContext.Set<TEntity>(); 
+        private DbSet<TEntity> DbSet => DbContext.Set<TEntity>();
 
         public virtual IQueryable<TEntity> Table => DbContext.Set<TEntity>();
 
@@ -79,56 +78,56 @@ namespace Swartz.Data
 
         #region IRepository<T> Members
 
-        IQueryable<TEntity> IRepository<TKey, TEntity, TType>.Table => Table;
+        IQueryable<TEntity> IRepository<TKey, TEntity>.Table => Table;
 
-        int IRepository<TKey, TEntity, TType>.Count(Expression<Func<TEntity, bool>> predicate)
+        int IRepository<TKey, TEntity>.Count(Expression<Func<TEntity, bool>> predicate)
         {
             return Count(predicate);
         }
 
-        void IRepository<TKey, TEntity, TType>.Create(TEntity entity)
+        void IRepository<TKey, TEntity>.Create(TEntity entity)
         {
             Create(entity);
         }
 
-        void IRepository<TKey, TEntity, TType>.Delete(TEntity entity)
+        void IRepository<TKey, TEntity>.Delete(TEntity entity)
         {
             Delete(entity);
         }
 
-        IQueryable<TEntity> IRepository<TKey, TEntity, TType>.Fetch(Expression<Func<TEntity, bool>> predicate)
+        IQueryable<TEntity> IRepository<TKey, TEntity>.Fetch(Expression<Func<TEntity, bool>> predicate)
         {
             return Fetch(predicate);
         }
 
-        IQueryable<TEntity> IRepository<TKey, TEntity, TType>.Fetch(Expression<Func<TEntity, bool>> predicate,
+        IQueryable<TEntity> IRepository<TKey, TEntity>.Fetch(Expression<Func<TEntity, bool>> predicate,
             Action<Orderable<TEntity>> order)
         {
             return Fetch(predicate, order);
         }
 
-        IQueryable<TEntity> IRepository<TKey, TEntity, TType>.Fetch(Expression<Func<TEntity, bool>> predicate,
+        IQueryable<TEntity> IRepository<TKey, TEntity>.Fetch(Expression<Func<TEntity, bool>> predicate,
             Action<Orderable<TEntity>> order, int skip, int count)
         {
             return Fetch(predicate, order, skip, count);
         }
 
-        TEntity IRepository<TKey, TEntity, TType>.Get(Expression<Func<TEntity, bool>> predicate)
+        TEntity IRepository<TKey, TEntity>.Get(Expression<Func<TEntity, bool>> predicate)
         {
             return Get(predicate);
         }
 
-        TEntity IRepository<TKey, TEntity, TType>.Get(TKey id)
+        TEntity IRepository<TKey, TEntity>.Get(TKey id)
         {
             return Get(id);
         }
 
-        void IRepository<TKey, TEntity, TType>.Update(TEntity entity)
+        void IRepository<TKey, TEntity>.Update(TEntity entity)
         {
             Update(entity);
         }
 
-        void IRepository<TKey, TEntity, TType>.CreateRange(IEnumerable<TEntity> entities)
+        void IRepository<TKey, TEntity>.CreateRange(IEnumerable<TEntity> entities)
         {
             CreateRange(entities);
         }
@@ -136,9 +135,9 @@ namespace Swartz.Data
         #endregion
     }
 
-    public class Repository<TEntity, TType> : Repository<decimal, TEntity, TType>, IRepository<TEntity, TType> where TEntity : class
+    public class Repository<TEntity> : Repository<decimal, TEntity>, IRepository<TEntity> where TEntity : class
     {
-        public Repository(IIndex<string, IEnumerable<ITransactionManager>> transactionManagers) : base(transactionManagers)
+        public Repository(ITransactionManager transactionManager) : base(transactionManager)
         {
         }
     }
