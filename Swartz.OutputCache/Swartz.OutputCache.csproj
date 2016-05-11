@@ -63,14 +63,21 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Configuration\CacheSettingsManager.cs" />
+    <Compile Include="Configuration\CacheSettingsSerializer.cs" />
+    <Compile Include="Configuration\ICacheSettingsManager.cs" />
+    <Compile Include="Configuration\RouteConfig\RouteConfigSerializer.cs" />
+    <Compile Include="Filters\CaptureStream.cs" />
     <Compile Include="Filters\OutputCacheFilter.cs" />
     <Compile Include="Helpers\OutputCacheAttributeExtensions.cs" />
     <Compile Include="ICacheService.cs" />
     <Compile Include="IOutputCacheStorageProvider.cs" />
     <Compile Include="ITagCache.cs" />
     <Compile Include="Models\CacheItem.cs" />
-    <Compile Include="Models\CacheRouteConfig.cs" />
+    <Compile Include="Configuration\RouteConfig\CacheRouteConfig.cs" />
+    <Compile Include="Configuration\CacheSettings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\CacheService.cs" />
     <Compile Include="Services\DefaultCacheStorageProvider.cs" />
     <Compile Include="Services\DefaultTagCache.cs" />
   </ItemGroup>
