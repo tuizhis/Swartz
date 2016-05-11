@@ -21,7 +21,7 @@ namespace Swartz.OutputCache.Configuration
         CacheSettings ICacheSettingsManager.LoadSettings()
         {
             var filePath =
-                _appDataFolder.ListDirectories("Sites")
+                _appDataFolder.ListDirectories("OutputCache")
                     .SelectMany(path => _appDataFolder.ListFiles(path))
                     .Where(
                         path =>
@@ -44,7 +44,7 @@ namespace Swartz.OutputCache.Configuration
                 throw new ArgumentNullException(nameof(settings));
             }
 
-            var filePath = Path.Combine(Path.Combine("Sites", _shellSettings.Name), SettingsFileName);
+            var filePath = Path.Combine(Path.Combine("OutputCache", _shellSettings.Name), SettingsFileName);
             _appDataFolder.CreateFile(filePath, CacheSettingsSerializer.ComposeSettings(settings));
         }
     }

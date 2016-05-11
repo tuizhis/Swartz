@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -29,7 +30,12 @@ namespace Swartz.Utility.Extensions
 
         public static string ToSafeDirectoryName(this string name)
         {
-            return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(name).Replace(" ", string.Empty);
+            foreach (var c in Path.GetInvalidPathChars())
+            {
+                name = name.Replace(c, '_');
+            }
+
+            return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(name);
         }
 
         public static byte[] ToByteArray(this string hex)

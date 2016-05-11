@@ -27,22 +27,36 @@ namespace Swartz.OutputCache.Filters
         private static readonly long Epoch = new DateTime(2014, DateTimeKind.Utc).Ticks;
 
         private readonly ICacheManager _cacheManager;
-        private readonly ICacheSettingsManager _cacheSettingsManager;
         private readonly ICacheService _cacheService;
+        private readonly ICacheSettingsManager _cacheSettingsManager;
         private readonly IOutputCacheStorageProvider _cacheStorageProvider;
         private readonly IClock _clock;
         private readonly ShellSettings _settings;
         private readonly ISignals _signals;
         private readonly IWorkContextAccessor _workContextAccessor;
-        private string _cacheKey;
 
+        private string _cacheKey;
         private CacheSettings _cacheSettings;
         private string _invariantCacheKey;
-        private DateTime _now;
-        private WorkContext _workContext;
         private bool _isCachingRequest;
-        private bool _transformRedirect;
         private bool _isDisposed;
+        private DateTime _now;
+        private bool _transformRedirect;
+        private CacheRouteConfig _cacheRouteConfig;
+
+        public OutputCacheFilter(ICacheManager cacheManager, ICacheSettingsManager cacheSettingsManager,
+            ICacheService cacheService, IOutputCacheStorageProvider cacheStorageProvider, IClock clock,
+            ShellSettings settings, ISignals signals, IWorkContextAccessor workContextAccessor)
+        {
+            _cacheManager = cacheManager;
+            _cacheSettingsManager = cacheSettingsManager;
+            _cacheStorageProvider = cacheStorageProvider;
+            _cacheService = cacheService;
+            _clock = clock;
+            _settings = settings;
+            _signals = signals;
+            _workContextAccessor = workContextAccessor;
+        }
 
         public ILogger Logger { get; set; }
 
@@ -87,13 +101,19 @@ namespace Swartz.OutputCache.Filters
                 return;
             }
 
-            if (!RequestIsCacheable(filterContext))
+            SwartzOutputCacheAttribute attribute;
+            if (!RequestIsCacheable(filterContext, out attribute))
             {
                 return;
             }
 
             _now = _clock.UtcNow;
-            _workContext = _workContextAccessor.GetContext();
+
+            _cacheRouteConfig = new CacheRouteConfig
+            {
+                Duration = attribute.Duration,
+                GraceTime = attribute.GraceTime
+            };
 
             // Computing the cache key after we know that the request is cacheable means that we are only performing this calculation on requests that require it
             _cacheKey = string.Intern(ComputeCacheKey(filterContext, GetCacheKeyParameters(filterContext)));
@@ -148,6 +168,122 @@ namespace Swartz.OutputCache.Filters
             {
                 ReleaseCacheKeyLock();
                 throw;
+            }
+        }
+
+        public void OnActionExecuted(ActionExecutedContext filterContext)
+        {
+            _transformRedirect = TransformRedirect(filterContext);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        public void OnResultExecuting(ResultExecutingContext filterContext)
+        {
+        }
+
+        public void OnResultExecuted(ResultExecutedContext filterContext)
+        {
+            // This filter is not reentrant (multiple executions within the same request are
+            // not supported) so child actions are ignored completely.
+            if (filterContext.IsChildAction) return;
+
+            var captureHandlerIsAttached = false;
+
+            try
+            {
+                if (!_isCachingRequest) return;
+
+                if (!ResponseIsCacheable(filterContext))
+                {
+                    filterContext.HttpContext.Response.Cache.SetCacheability(HttpCacheability.NoCache);
+                    filterContext.HttpContext.Response.Cache.SetNoStore();
+                    filterContext.HttpContext.Response.Cache.SetMaxAge(new TimeSpan(0));
+                    return;
+                }
+
+                // Determine duration and grace time.
+                var cacheDuration = _cacheRouteConfig?.Duration ?? CacheSettings.DefaultCacheDuration;
+                var cacheGraceTime = _cacheRouteConfig?.GraceTime ?? CacheSettings.DefaultCacheGraceTime;
+
+                // Capture the response output using a custom filter stream.
+                var response = filterContext.HttpContext.Response;
+                var captureStream = new CaptureStream(response.Filter);
+                response.Filter = captureStream;
+
+                // Add ETag header for the newly created item
+                var etag = Guid.NewGuid().ToString("n");
+                if (HttpRuntime.UsingIntegratedPipeline)
+                {
+                    if (response.Headers.Get("ETag") == null)
+                    {
+                        response.Headers["ETag"] = etag;
+                    }
+                }
+
+                captureStream.Captured += output =>
+                {
+                    try
+                    {
+                        // Since this is a callback any call to injected dependencies can result in an Autofac exception: "Instances 
+                        // cannot be resolved and nested lifetimes cannot be created from this LifetimeScope as it has already been disposed."
+                        // To prevent access to the original lifetime scope a new work context scope should be created here and dependencies
+                        // should be resolved from it.
+
+                        using (var scope = _workContextAccessor.CreateWorkContextScope())
+                        {
+                            var cacheItem = new CacheItem
+                            {
+                                CachedOnUtc = _now,
+                                Duration = cacheDuration,
+                                GraceTime = cacheGraceTime,
+                                Output = output,
+                                ContentType = response.ContentType,
+                                // ReSharper disable once PossibleNullReferenceException
+                                QueryString = filterContext.HttpContext.Request.Url.Query,
+                                CacheKey = _cacheKey,
+                                InvariantCacheKey = _invariantCacheKey,
+                                Url = filterContext.HttpContext.Request.Url.AbsolutePath,
+                                Tenant = scope.Resolve<ShellSettings>().Name,
+                                StatusCode = response.StatusCode,
+                                Tags = new []{_invariantCacheKey},
+                                ETag = etag
+                            };
+
+                            // Write the rendered item to the cache.
+                            var cacheStorageProvider = scope.Resolve<IOutputCacheStorageProvider>();
+                            cacheStorageProvider.Set(_cacheKey, cacheItem);
+
+                            // Also add the item tags to the tag cache.
+                            var tagCache = scope.Resolve<ITagCache>();
+                            foreach (var tag in cacheItem.Tags)
+                            {
+                                tagCache.Tag(tag, _cacheKey);
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        // Always release the cache key lock when the request ends.
+                        ReleaseCacheKeyLock();
+                    }
+                };
+
+                captureHandlerIsAttached = true;
+            }
+            finally
+            {
+                // If the response filter stream capture handler was attached then we'll trust
+                // it to release the cache key lock at some point in the future when the stream
+                // is flushed; otherwise we'll make sure we'll release it here.
+                if (!captureHandlerIsAttached)
+                {
+                    ReleaseCacheKeyLock();
+                }
             }
         }
 
@@ -300,10 +436,13 @@ namespace Swartz.OutputCache.Filters
                 }
             }
 
-            foreach (var varyByRequestHeader in CacheSettings.VaryByRequestHeaders)
+            if (CacheSettings.VaryByRequestHeaders != null)
             {
-                response.Cache.VaryByHeaders[varyByRequestHeader] = true;
-            }
+                foreach (var varyByRequestHeader in CacheSettings.VaryByRequestHeaders)
+                {
+                    response.Cache.VaryByHeaders[varyByRequestHeader] = true;
+                }
+            } 
         }
 
         private void ReleaseCacheKeyLock()
@@ -313,17 +452,6 @@ namespace Swartz.OutputCache.Filters
                 Monitor.Exit(_cacheKey);
                 _cacheKey = null;
             }
-        }
-
-        public void OnActionExecuted(ActionExecutedContext filterContext)
-        {
-            _transformRedirect = TransformRedirect(filterContext);
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
         }
 
         protected virtual void Dispose(bool disposing)
@@ -350,94 +478,6 @@ namespace Swartz.OutputCache.Filters
             Dispose(false);
         }
 
-        public void OnResultExecuting(ResultExecutingContext filterContext)
-        {
-        }
-
-        public void OnResultExecuted(ResultExecutedContext filterContext)
-        {
-            // This filter is not reentrant (multiple executions within the same request are
-            // not supported) so child actions are ignored completely.
-            if (filterContext.IsChildAction) return;
-
-            var captureHandlerIsAttached = false;
-
-            try
-            {
-                if (!_isCachingRequest) return;
-
-                if (!ResponseIsCacheable(filterContext))
-                {
-                    filterContext.HttpContext.Response.Cache.SetCacheability(HttpCacheability.NoCache);
-                    filterContext.HttpContext.Response.Cache.SetNoStore();
-                    filterContext.HttpContext.Response.Cache.SetMaxAge(new TimeSpan(0));
-                    return;
-                }
-
-                // Capture the response output using a custom filter stream.
-                var response = filterContext.HttpContext.Response;
-                var captureStream = new CaptureStream(response.Filter);
-                response.Filter = captureStream;
-
-                // Add ETag header for the newly created item
-                var etag = Guid.NewGuid().ToString("n");
-                if (HttpRuntime.UsingIntegratedPipeline)
-                {
-                    if (response.Headers.Get("ETag") == null)
-                    {
-                        response.Headers["ETag"] = etag;
-                    }
-                }
-
-                captureStream.Captured += (output) =>
-                {
-                    try
-                    {
-                        // Since this is a callback any call to injected dependencies can result in an Autofac exception: "Instances 
-                        // cannot be resolved and nested lifetimes cannot be created from this LifetimeScope as it has already been disposed."
-                        // To prevent access to the original lifetime scope a new work context scope should be created here and dependencies
-                        // should be resolved from it.
-
-                        using (var scope = _workContextAccessor.CreateWorkContextScope())
-                        {
-                            var cacheItem = new CacheItem
-                            {
-                                CachedOnUtc = _now
-                            };
-
-                            // Write the rendered item to the cache.
-                            var cacheStorageProvider = scope.Resolve<IOutputCacheStorageProvider>();
-                            cacheStorageProvider.Set(_cacheKey, cacheItem);
-
-                            // Also add the item tags to the tag cache.
-                            var tagCache = scope.Resolve<ITagCache>();
-                            foreach (var tag in cacheItem.Tags)
-                            {
-                                tagCache.Tag(tag, _cacheKey);
-                            }
-                        }
-                    }
-                    finally
-                    {
-                        // Always release the cache key lock when the request ends.
-                        ReleaseCacheKeyLock();
-                    }
-                };
-
-                captureHandlerIsAttached = true;
-            }
-            finally
-            {
-                // If the response filter stream capture handler was attached then we'll trust
-                // it to release the cache key lock at some point in the future when the stream
-                // is flushed; otherwise we'll make sure we'll release it here.
-                if (!captureHandlerIsAttached)
-                {
-                    ReleaseCacheKeyLock();
-                }
-            }
-        }
-
         protected virtual bool ResponseIsCacheable(ResultExecutedContext filterContext)
         {
             if (filterContext.HttpContext.Request.Url == null)
@@ -455,29 +495,25 @@ namespace Swartz.OutputCache.Filters
             return true;
         }
 
-        protected virtual bool RequestIsCacheable(ActionExecutingContext filterContext)
+        protected virtual bool RequestIsCacheable(ActionExecutingContext filterContext, out SwartzOutputCacheAttribute outputCacheAttribute)
         {
-            // Respect OutputCacheAttribute if applied.
-            var actionAttributes = filterContext.ActionDescriptor.GetCustomAttributes(typeof(OutputCacheAttribute), true);
-            var controllerAttributes =
-                filterContext.ActionDescriptor.ControllerDescriptor.GetCustomAttributes(typeof(OutputCacheAttribute),
-                    true);
-            var outputCacheAttribute =
-                actionAttributes.Concat(controllerAttributes).Cast<OutputCacheAttribute>().FirstOrDefault();
+            // Ignore authenticated requests unless the setting to cache them is true.
+            var authenticated =
+                filterContext.ActionDescriptor.GetCustomAttributes(typeof(AuthorizeAttribute), true)
+                    .Concat(
+                        filterContext.ActionDescriptor.ControllerDescriptor.GetCustomAttributes(
+                            typeof(AuthorizeAttribute), true));
 
-            if (outputCacheAttribute != null)
+            if (authenticated.Any() && !CacheSettings.CacheAuthenticatedRequests)
             {
-                if (outputCacheAttribute.Duration <= 0 || outputCacheAttribute.NoStore ||
-                    outputCacheAttribute.LocationIsIn(OutputCacheLocation.Downstream, OutputCacheLocation.Client,
-                        OutputCacheLocation.None))
-                {
-                    return false;
-                }
+                outputCacheAttribute = null;
+                return false;
             }
 
             // Don't cache POST requests.
             if (filterContext.HttpContext.Request.HttpMethod.Equals("POST", StringComparison.OrdinalIgnoreCase))
             {
+                outputCacheAttribute = null;
                 return false;
             }
 
@@ -485,6 +521,7 @@ namespace Swartz.OutputCache.Filters
             if (IsIgnoredUrl(filterContext.RequestContext.HttpContext.Request.AppRelativeCurrentExecutionFilePath,
                 CacheSettings.IgnoredUrls))
             {
+                outputCacheAttribute = null;
                 return false;
             }
 
@@ -493,10 +530,34 @@ namespace Swartz.OutputCache.Filters
             {
                 if (string.Equals(_refreshKey, key, StringComparison.OrdinalIgnoreCase))
                 {
+                    outputCacheAttribute = null;
                     return false;
                 }
             }
 
+            // Respect SwartzOutputCacheAttribute if applied.
+            var attribute =
+                filterContext.ActionDescriptor.GetCustomAttributes(typeof(SwartzOutputCacheAttribute), true)
+                    .Concat(
+                        filterContext.ActionDescriptor.ControllerDescriptor.GetCustomAttributes(
+                            typeof(SwartzOutputCacheAttribute), true))
+                    .Cast<SwartzOutputCacheAttribute>()
+                    .FirstOrDefault();
+            if (attribute == null)
+            {
+                outputCacheAttribute = null;
+                return false;
+            }
+
+            if (attribute.Duration <= 0 || attribute.NoStore ||
+                attribute.LocationIsIn(OutputCacheLocation.Downstream, OutputCacheLocation.Client,
+                    OutputCacheLocation.None))
+            {
+                outputCacheAttribute = null;
+                return false;
+            }
+
+            outputCacheAttribute = attribute;
             return true;
         }
 
