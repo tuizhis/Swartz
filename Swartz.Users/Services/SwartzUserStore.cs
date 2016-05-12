@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
 using Swartz.Users.Models;
@@ -7,128 +8,361 @@ using Swartz.Users.Models;
 namespace Swartz.Users.Services
 {
     public class SwartzUserStore<TUser, TRole, TUserRole, TKey> : ISwartzUserStore<TUser, TKey>
-        where TUser : SwartzUser<TKey> where TRole : SwartzRole<TKey> where TUserRole : SwartzUserRole<TKey>, new()
+        where TUser : SwartzUser<TKey>
+        where TRole : SwartzRole<TKey>
+        where TUserRole : SwartzUserRole<TKey>, new()
+        where TKey : IEquatable<TKey>
     {
+        private readonly DbSet<TRole> _roleStore;
+        private readonly DbSet<TUserRole> _userRoles;
+        private bool _disposed;
+        private DbSet<TUser> _userStore;
+
+        public SwartzUserStore(DbContext context)
+        {
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            Context = context;
+            _userStore = Context.Set<TUser>();
+            _roleStore = Context.Set<TRole>();
+            _userRoles = Context.Set<TUserRole>();
+            AutoSaveChanges = true;
+        }
+
+        public DbContext Context { get; private set; }
+
+        public bool DisposeContext { get; set; }
+
+        public bool AutoSaveChanges { get; set; }
+
         public void Dispose()
         {
-            throw new NotImplementedException();
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
-        public Task CreateAsync(TUser user)
+        public virtual async Task CreateAsync(TUser user)
         {
-            throw new NotImplementedException();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            _userStore.Add(user);
+            await SaveChangesAsync();
         }
 
-        public Task UpdateAsync(TUser user)
+        public virtual async Task UpdateAsync(TUser user)
         {
-            throw new NotImplementedException();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            Context.Entry(user).State = EntityState.Modified;
+            await SaveChangesAsync();
         }
 
-        public Task DeleteAsync(TUser user)
+        public virtual async Task DeleteAsync(TUser user)
         {
-            throw new NotImplementedException();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            _userStore.Remove(user);
+            await SaveChangesAsync();
         }
 
-        public Task<TUser> FindByIdAsync(TKey userId)
+        public virtual async Task<TUser> FindByIdAsync(TKey userId)
         {
-            throw new NotImplementedException();
+            ThrowIfDisposed();
+            return await _userStore.FindAsync(userId);
         }
 
-        public Task<TUser> FindByNameAsync(string userName)
+        public virtual async Task<TUser> FindByNameAsync(string userName)
         {
-            throw new NotImplementedException();
+            ThrowIfDisposed();
+            return await Users.SingleOrDefaultAsync(x => x.UserName.ToUpper() == userName.ToUpper());
         }
 
-        public Task AddToRoleAsync(TUser user, string roleName)
+        public virtual async Task AddToRoleAsync(TUser user, string roleName)
         {
-            throw new NotImplementedException();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+            if (string.IsNullOrWhiteSpace(roleName))
+            {
+                throw new ArgumentException("Value cannot be null or empty", nameof(roleName));
+            }
+
+            var role = await _roleStore.SingleOrDefaultAsync(x => x.Name.ToUpper() == roleName.ToUpper());
+            if (role == null)
+            {
+                throw new InvalidOperationException($"Role {roleName} does not exist.");
+            }
+
+            var userRole = new TUserRole
+            {
+                UserId = user.Id,
+                RoleId = role.Id
+            };
+            _userRoles.Add(userRole);
         }
 
-        public Task RemoveFromRoleAsync(TUser user, string roleName)
+        public virtual async Task RemoveFromRoleAsync(TUser user, string roleName)
         {
-            throw new NotImplementedException();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+            if (string.IsNullOrWhiteSpace(roleName))
+            {
+                throw new ArgumentException("Value cannot be null or empty", nameof(roleName));
+            }
+
+            var role = await _roleStore.SingleOrDefaultAsync(x => x.Name.ToUpper() == roleName.ToUpper());
+            if (role != null)
+            {
+                var entity =
+                    await _userRoles.FirstOrDefaultAsync(r => r.RoleId.Equals(role.Id) && r.UserId.Equals(user.Id));
+                if (entity != null)
+                {
+                    _userRoles.Remove(entity);
+                }
+            }
         }
 
-        public Task<IList<string>> GetRolesAsync(TUser user)
+        public virtual async Task<IList<string>> GetRolesAsync(TUser user)
         {
-            throw new NotImplementedException();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            var userId = user.Id;
+            var source = from userRole in _userRoles
+                where userRole.UserId.Equals(userId)
+                select userRole
+                into userRole
+                join role in _roleStore on userRole.RoleId equals role.Id
+                select role.Name;
+
+            return await source.ToListAsync();
         }
 
-        public Task<bool> IsInRoleAsync(TUser user, string roleName)
+        public virtual async Task<bool> IsInRoleAsync(TUser user, string roleName)
         {
-            throw new NotImplementedException();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(roleName));
+            }
+            if (string.IsNullOrWhiteSpace(roleName))
+            {
+                throw new ArgumentException("Value cannot be null or empty", nameof(roleName));
+            }
+
+            var role = await _roleStore.SingleOrDefaultAsync(x => x.Name.ToUpper() == roleName.ToUpper());
+            if (role != null)
+            {
+                return await _userRoles.AnyAsync(ur => ur.RoleId.Equals(role.Id) && ur.UserId.Equals(user.Id));
+            }
+
+            return false;
         }
 
-        public Task SetPasswordHashAsync(TUser user, string passwordHash)
+        public virtual Task SetPasswordHashAsync(TUser user, string passwordHash)
         {
-            throw new NotImplementedException();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            user.Password = passwordHash;
+            return Task.FromResult(0);
         }
 
-        public Task<string> GetPasswordHashAsync(TUser user)
+        public virtual Task<string> GetPasswordHashAsync(TUser user)
         {
-            throw new NotImplementedException();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+            return Task.FromResult(user.Password);
         }
 
-        public Task<bool> HasPasswordAsync(TUser user)
+        public virtual Task<bool> HasPasswordAsync(TUser user)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(user.Password != null);
         }
 
-        public Task SetEmailAsync(TUser user, string email)
+        public virtual Task SetEmailAsync(TUser user, string email)
         {
-            throw new NotImplementedException();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+            user.Email = email;
+            return Task.FromResult(0);
         }
 
-        public Task<string> GetEmailAsync(TUser user)
+        public virtual Task<string> GetEmailAsync(TUser user)
         {
-            throw new NotImplementedException();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            return Task.FromResult(user.Email);
         }
 
-        public Task<bool> GetEmailConfirmedAsync(TUser user)
+        public virtual Task<bool> GetEmailConfirmedAsync(TUser user)
         {
-            throw new NotImplementedException();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            return Task.FromResult(user.EmailConfirmed);
         }
 
-        public Task SetEmailConfirmedAsync(TUser user, bool confirmed)
+        public virtual Task SetEmailConfirmedAsync(TUser user, bool confirmed)
         {
-            throw new NotImplementedException();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            user.EmailConfirmed = confirmed;
+            return Task.FromResult(0);
         }
 
-        public Task<TUser> FindByEmailAsync(string email)
+        public virtual async Task<TUser> FindByEmailAsync(string email)
         {
-            throw new NotImplementedException();
+            ThrowIfDisposed();
+            return await Users.SingleOrDefaultAsync(x => x.Email.ToUpper() == email.ToUpper());
         }
 
-        public IQueryable<TUser> Users { get; }
+        public IQueryable<TUser> Users => _userStore;
 
         public Task SetPhoneNumberAsync(TUser user, string phoneNumber)
         {
-            throw new NotImplementedException();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            user.Phone = phoneNumber;
+            return Task.FromResult(0);
         }
 
-        public Task<string> GetPhoneNumberAsync(TUser user)
+        public virtual Task<string> GetPhoneNumberAsync(TUser user)
         {
-            throw new NotImplementedException();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+            return Task.FromResult(user.Phone);
         }
 
         public Task<bool> GetPhoneNumberConfirmedAsync(TUser user)
         {
-            throw new NotImplementedException();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            return Task.FromResult(user.PhoneNumberConfirmed);
         }
 
-        public Task SetPhoneNumberConfirmedAsync(TUser user, bool confirmed)
+        public virtual Task SetPhoneNumberConfirmedAsync(TUser user, bool confirmed)
         {
-            throw new NotImplementedException();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            user.PhoneNumberConfirmed = confirmed;
+            return Task.FromResult(0);
         }
 
-        public Task SetSecurityStampAsync(TUser user, string stamp)
+        public virtual Task SetSecurityStampAsync(TUser user, string stamp)
         {
-            throw new NotImplementedException();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+            user.SecurityStamp = stamp;
+            return Task.FromResult(0);
         }
 
-        public Task<string> GetSecurityStampAsync(TUser user)
+        public virtual Task<string> GetSecurityStampAsync(TUser user)
         {
-            throw new NotImplementedException();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            return Task.FromResult(user.SecurityStamp);
+        }
+
+        private void ThrowIfDisposed()
+        {
+            if (_disposed)
+            {
+                throw new ObjectDisposedException(GetType().Name);
+            }
+        }
+
+        private async Task SaveChangesAsync()
+        {
+            if (!AutoSaveChanges)
+            {
+                return;
+            }
+            await Context.SaveChangesAsync();
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (DisposeContext && disposing)
+            {
+                Context?.Dispose();
+            }
+            _disposed = true;
+            Context = null;
+            _userStore = null;
+        }
+    }
+
+    public class SwartzUserStore<TUser> : SwartzUserStore<TUser, SwartzRole, SwartzUserRole, decimal>
+        where TUser : SwartzUser
+    {
+        public SwartzUserStore(DbContext context) : base(context)
+        {
         }
     }
 }

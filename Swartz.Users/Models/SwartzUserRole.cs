@@ -11,4 +11,8 @@ namespace Swartz.Users.Models
         [Key, Column(Order = 1)]
         public virtual TKey RoleId { get; set; }
     }
+
+    public class SwartzUserRole : SwartzUserRole<decimal>
+    {
+    }
 }

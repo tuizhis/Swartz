@@ -139,6 +139,7 @@
     <Compile Include="Data\ITransactionManager.cs" />
     <Compile Include="Data\Orderable.cs" />
     <Compile Include="Data\Providers\AbstractMySqlDbContext.cs" />
+    <Compile Include="Data\Puid.cs" />
     <Compile Include="Data\Repository.cs" />
     <Compile Include="Data\TransactionManager.cs" />
     <Compile Include="Environment\ApplicationEnvironment.cs" />

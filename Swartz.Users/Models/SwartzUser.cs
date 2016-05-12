@@ -1,4 +1,6 @@
-﻿namespace Swartz.Users.Models
+﻿using Swartz.Data;
+
+namespace Swartz.Users.Models
 {
     public class SwartzUser<TKey> : ISwartzUser<TKey>
     {
@@ -15,5 +17,18 @@
         public virtual string SecurityStamp { get; set; }
         public virtual TKey Id { get; set; }
         public virtual string UserName { get; set; }
+    }
+
+    public class SwartzUser : SwartzUser<decimal>
+    {
+        public SwartzUser()
+        {
+            Id = Puid.NewPuid();
+        }
+
+        public SwartzUser(string userName) : this()
+        {
+            UserName = userName;
+        }
     }
 }

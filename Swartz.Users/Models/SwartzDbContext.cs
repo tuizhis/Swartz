@@ -41,4 +41,9 @@ namespace Swartz.Users.Models
 
         public virtual IDbSet<TUserRole> UserRoles { get; set; }
     }
+
+    public class SwartzDbContext<TUser> : SwartzDbContext<TUser, SwartzRole<decimal>, decimal, SwartzUserRole<decimal>>
+        where TUser : SwartzUser<decimal>
+    {
+    } 
 }
