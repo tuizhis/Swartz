@@ -6,7 +6,7 @@ using Swartz.Users.Models;
 
 namespace Swartz.Users.Services
 {
-    public class SwartzUserStore<TUser, TRole, TUserRole, TKey> : ISwartzUserStore<TUser, TRole, TUserRole, TKey>
+    public class SwartzUserStore<TUser, TRole, TUserRole, TKey> : ISwartzUserStore<TUser, TKey>
         where TUser : SwartzUser<TKey> where TRole : SwartzRole<TKey> where TUserRole : SwartzUserRole<TKey>, new()
     {
         public void Dispose()
