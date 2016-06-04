@@ -154,6 +154,7 @@
     <Compile Include="Environment\DefaultSwartzHostContainer.cs" />
     <Compile Include="Environment\DefaultWebHost.cs" />
     <Compile Include="Environment\DefaultWebShell.cs" />
+    <Compile Include="Environment\Extensions\SwartzSuppressDependencyAttribute.cs" />
     <Compile Include="Environment\HostEnvironment.cs" />
     <Compile Include="Environment\IApplicationEnvironment.cs" />
     <Compile Include="Environment\IAssemblyLoader.cs" />
@@ -190,6 +191,9 @@
     <Compile Include="FileSystems\VirtualPath\DefaultVirtualPathMonitor.cs" />
     <Compile Include="FileSystems\VirtualPath\IVirtualPathMonitor.cs" />
     <Compile Include="FlatPositionComparer.cs" />
+    <Compile Include="GuidGeneration.cs" />
+    <Compile Include="GuidGenerator.cs" />
+    <Compile Include="GuidVersion.cs" />
     <Compile Include="IDependency.cs" />
     <Compile Include="InvokeExtensions.cs" />
     <Compile Include="IWorkContextAccessor.cs" />
@@ -250,10 +254,12 @@
     <Compile Include="SwartzException.cs" />
     <Compile Include="SwartzFatalException.cs" />
     <Compile Include="SwartzSecurityException.cs" />
+    <Compile Include="Utility\DateTimePrecise.cs" />
     <Compile Include="Utility\Extensions\HttpRequestExtensions.cs" />
     <Compile Include="Utility\Extensions\ReadOnlyCollectionExtensions.cs" />
     <Compile Include="Utility\Extensions\StringExtensions.cs" />
     <Compile Include="Utility\Reflect.cs" />
+    <Compile Include="Utility\TimestampHelper.cs" />
     <Compile Include="Validation\Argument.cs" />
     <Compile Include="Validation\PathValidation.cs" />
     <Compile Include="WebApi\AutofacWebApiDependencyResolver.cs" />
