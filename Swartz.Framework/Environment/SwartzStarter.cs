@@ -9,6 +9,7 @@ using Swartz.Caching;
 using Swartz.Environment.Configuration;
 using Swartz.Environment.ShellBuilders;
 using Swartz.Events;
+using Swartz.Exceptions;
 using Swartz.FileSystems.AppData;
 using Swartz.FileSystems.VirtualPath;
 using Swartz.Logging;
@@ -44,6 +45,7 @@ namespace Swartz.Environment
             builder.RegisterType<SwartzFrameworkAssemblyNameResolver>().As<IAssemblyNameResolver>().SingleInstance();
             builder.RegisterType<HttpContextAccessor>().As<IHttpContextAccessor>().SingleInstance();
             builder.RegisterType<ApplicationEnvironment>().As<IApplicationEnvironment>().SingleInstance();
+            builder.RegisterType<DefaultExceptionPolicy>().As<IExceptionPolicy>().SingleInstance();
 
             RegisterVolatileProvider<AppDataFolder, IAppDataFolder>(builder);
             RegisterVolatileProvider<Clock, IClock>(builder);

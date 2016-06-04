@@ -184,7 +184,9 @@
     <Compile Include="Events\EventsRegistrationSource.cs" />
     <Compile Include="Events\IEventBus.cs" />
     <Compile Include="Events\IEventHandler.cs" />
+    <Compile Include="Exceptions\DefaultExceptionPolicy.cs" />
     <Compile Include="Exceptions\ExceptionExtensions.cs" />
+    <Compile Include="Exceptions\IExceptionPolicy.cs" />
     <Compile Include="FileSystems\AppData\AppDataFolder.cs" />
     <Compile Include="FileSystems\AppData\IAppDataFolder.cs" />
     <Compile Include="FileSystems\AppData\IAppDataFolderRoot.cs" />
