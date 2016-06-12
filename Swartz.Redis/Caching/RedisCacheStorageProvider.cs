@@ -2,12 +2,14 @@
 using StackExchange.Redis;
 using Swartz.Caching;
 using Swartz.Environment.Configuration;
+using Swartz.Environment.Extensions;
 using Swartz.Redis.Configuration;
 using Swartz.Redis.Extensions;
 using Swartz.Services;
 
 namespace Swartz.Redis.Caching
 {
+    [SwartzSuppressDependency("Swartz.Caching.Services.DefaultCacheStorageProvider")]
     public class RedisCacheStorageProvider : Component, ICacheStorageProvider
     {
         public const string ConnectionStringKey = "Swartz.Redis.Cache";

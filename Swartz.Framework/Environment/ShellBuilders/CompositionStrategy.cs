@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Web.Hosting;
 using System.Web.Http.Controllers;
 using System.Web.Mvc;
 using Autofac.Core;
 using Swartz.Environment.Configuration;
+using Swartz.Environment.Extensions;
 using Swartz.Environment.ShellBuilders.Models;
 
 namespace Swartz.Environment.ShellBuilders
@@ -36,42 +38,11 @@ namespace Swartz.Environment.ShellBuilders
                     .Select(r => _assemblyLoader.Load(Path.GetFileNameWithoutExtension(r.FullName)))
                     .ToArray();
 
-            var modules = new List<ShellBlueprintItem>();
-            var dependencies = new List<ShellBlueprintItem>();
-            var controllers = new List<ControllerBlueprint>();
-            var httpControllers = new List<ControllerBlueprint>();
-
-            foreach (var assembly in assemblies)
-            {
-                var types = assembly.GetExportedTypes().Where(t => t.IsClass && !t.IsAbstract).ToList();
-                var m = types.Where(IsModule).Select(t => new ShellBlueprintItem
-                {
-                    Type = t
-                });
-                modules.AddRange(m);
-
-                var d = types.Where(IsDependency).Select(x => new ShellBlueprintItem
-                {
-                    Type = x
-                });
-                dependencies.AddRange(d);
-
-                var c = types.Where(IsController).Select(t => new ControllerBlueprint
-                {
-                    Type = t,
-                    AreaName = GetAreaName(t),
-                    ControllerName = GetControllerName(t)
-                });
-                controllers.AddRange(c);
-
-                var h = types.Where(IsHttpController).Select(x => new ControllerBlueprint
-                {
-                    Type = x,
-                    AreaName = GetHttpAreaName(x),
-                    ControllerName = GetControllerName(x)
-                });
-                httpControllers.AddRange(h);
-            }
+            var excludedTypes = (HashSet<string>) GetExcludedTypes(assemblies);
+            var modules = BuildBlueprint(assemblies, IsModule, BuildDependency, excludedTypes);
+            var dependencies = BuildBlueprint(assemblies, IsDependency, BuildDependency, excludedTypes);
+            var controllers = BuildBlueprint(assemblies, IsController, BuildController, excludedTypes);
+            var httpControllers = BuildBlueprint(assemblies, IsHttpController, BuildController, excludedTypes);
 
             var result = new ShellBlueprint
             {
@@ -81,6 +52,61 @@ namespace Swartz.Environment.ShellBuilders
             };
 
             return result;
+        }
+
+        private static ShellBlueprintItem BuildDependency(Type type)
+        {
+            return new ShellBlueprintItem
+            {
+                Type = type
+            };
+        }
+
+        private static ControllerBlueprint BuildController(Type type)
+        {
+            var areaName = typeof(IHttpController).IsAssignableFrom(type) ? GetHttpAreaName(type) : GetAreaName(type);
+
+            var controllerName = GetControllerName(type);
+
+            return new ControllerBlueprint
+            {
+                Type = type,
+                AreaName = areaName,
+                ControllerName = controllerName
+            };
+        }
+
+        private static IEnumerable<T> BuildBlueprint<T>(IEnumerable<Assembly> assemblies, Func<Type, bool> predicate,
+            Func<Type, T> selector, IEnumerable<string> excludedTypes)
+        {
+            return
+                assemblies.SelectMany(
+                    a =>
+                        a.GetExportedTypes()
+                            .Where(predicate)
+                            .Where(type => !excludedTypes.Contains(type.FullName))
+                            .Select(selector)).ToArray();
+        }
+
+        private static IEnumerable<string> GetExcludedTypes(IEnumerable<Assembly> assemblies)
+        {
+            var excludedTypes = new HashSet<string>();
+
+            // Identify replaced types.
+            foreach (var assembly in assemblies)
+            {
+                foreach (var type in assembly.GetExportedTypes())
+                {
+                    foreach (
+                        SwartzSuppressDependencyAttribute attribute in
+                            type.GetCustomAttributes(typeof(SwartzSuppressDependencyAttribute), false))
+                    {
+                        excludedTypes.Add(attribute.FullName);
+                    }
+                }
+            }
+
+            return excludedTypes;
         }
 
         private static bool IsModule(Type type)

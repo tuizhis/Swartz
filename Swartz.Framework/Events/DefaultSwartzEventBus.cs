@@ -16,10 +16,12 @@ namespace Swartz.Events
                 new ConcurrentDictionary<string, Tuple<ParameterInfo[], Func<IEventHandler, object[], object>>>();
 
         private readonly IIndex<string, IEnumerable<IEventHandler>> _eventHandlers;
+        private readonly IExceptionPolicy _exceptionPolicy;
 
-        public DefaultSwartzEventBus(IIndex<string, IEnumerable<IEventHandler>> eventHandlers)
+        public DefaultSwartzEventBus(IIndex<string, IEnumerable<IEventHandler>> eventHandlers, IExceptionPolicy exceptionPolicy)
         {
             _eventHandlers = eventHandlers;
+            _exceptionPolicy = exceptionPolicy;
         }
 
         public IEnumerable Notify(string messageName, IDictionary<string, object> eventData)
@@ -65,6 +67,10 @@ namespace Swartz.Events
             catch (Exception exception)
             {
                 if (exception.IsFatal())
+                {
+                    throw;
+                }
+                if (!_exceptionPolicy.HandleException(this, exception))
                 {
                     throw;
                 }
