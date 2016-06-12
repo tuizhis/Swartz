@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Swartz.Redis", "Swartz.Redi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Swartz.OutputCache", "Swartz.OutputCache\Swartz.OutputCache.csproj", "{98C320FF-B79F-4D71-BE74-21E520BFC8A5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Swartz.Web", "Swartz.Web\Swartz.Web.csproj", "{9E4B679B-1E15-4676-9639-E67BB9380042}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -53,6 +55,10 @@ Global
 		{98C320FF-B79F-4D71-BE74-21E520BFC8A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{98C320FF-B79F-4D71-BE74-21E520BFC8A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{98C320FF-B79F-4D71-BE74-21E520BFC8A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9E4B679B-1E15-4676-9639-E67BB9380042}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9E4B679B-1E15-4676-9639-E67BB9380042}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9E4B679B-1E15-4676-9639-E67BB9380042}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9E4B679B-1E15-4676-9639-E67BB9380042}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

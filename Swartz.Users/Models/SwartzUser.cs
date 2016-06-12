@@ -1,4 +1,5 @@
-﻿using Swartz.Data;
+﻿using System;
+using Swartz.Data;
 
 namespace Swartz.Users.Models
 {
@@ -13,6 +14,19 @@ namespace Swartz.Users.Models
         public virtual bool EmailConfirmed { get; set; }
 
         public virtual bool PhoneNumberConfirmed { get; set; }
+
+        /// <summary>
+        ///     DateTime in UTC when lockout ends, any time in the past is considered not locked out.
+        /// </summary>
+        public virtual DateTime? LockoutEndDateUtc { get; set; }
+
+        /// <summary>Is lockout enabled for this user</summary>
+        public virtual bool LockoutEnabled { get; set; }
+
+        /// <summary>
+        ///     Used to record failures for the purposes of lockout
+        /// </summary>
+        public virtual int AccessFailedCount { get; set; }
 
         public virtual string SecurityStamp { get; set; }
         public virtual TKey Id { get; set; }

@@ -35,15 +35,41 @@ namespace Swartz.Users.Models
         {
         }
 
-        public virtual IDbSet<TUser> Users { get; set; }
+        //public virtual IDbSet<TUser> Users { get; set; }
 
-        public virtual IDbSet<TRole> Roles { get; set; }
+        //public virtual IDbSet<TRole> Roles { get; set; }
 
-        public virtual IDbSet<TUserRole> UserRoles { get; set; }
+        //public virtual IDbSet<TUserRole> UserRoles { get; set; }
     }
 
     public class SwartzDbContext<TUser> : SwartzDbContext<TUser, SwartzRole<decimal>, decimal, SwartzUserRole<decimal>>
         where TUser : SwartzUser<decimal>
     {
+        public SwartzDbContext() : this("DefaultConnection")
+        {
+        }
+
+        public SwartzDbContext(string nameOrConnectionString) : base(nameOrConnectionString)
+        {
+        }
+
+        public SwartzDbContext(DbConnection existingConnection, DbCompiledModel model, bool contextOwnsConnection)
+            : base(existingConnection, model, contextOwnsConnection)
+        {
+        }
+
+        public SwartzDbContext(DbCompiledModel model) : base(model)
+        {
+        }
+
+        public SwartzDbContext(DbConnection existingConnection, bool contextOwnsConnection)
+            : base(existingConnection, contextOwnsConnection)
+        {
+        }
+
+        public SwartzDbContext(string nameOrConnectionString, DbCompiledModel model)
+            : base(nameOrConnectionString, model)
+        {
+        }
     } 
 }

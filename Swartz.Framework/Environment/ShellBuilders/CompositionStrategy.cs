@@ -33,8 +33,6 @@ namespace Swartz.Environment.ShellBuilders
 
             var assemblies =
                 new DirectoryInfo(binPath).GetFiles("*.dll", SearchOption.TopDirectoryOnly)
-                    .Concat(new DirectoryInfo(binPath).GetFiles("*.exe", SearchOption.TopDirectoryOnly))
-                    .Where(x => !Path.GetFileNameWithoutExtension(x.FullName).Contains("vshost"))
                     .Select(r => _assemblyLoader.Load(Path.GetFileNameWithoutExtension(r.FullName)))
                     .ToArray();
 
@@ -83,6 +81,7 @@ namespace Swartz.Environment.ShellBuilders
                 assemblies.SelectMany(
                     a =>
                         a.GetExportedTypes()
+                            .Where(type => type.IsClass && !type.IsAbstract)
                             .Where(predicate)
                             .Where(type => !excludedTypes.Contains(type.FullName))
                             .Select(selector)).ToArray();

@@ -20,3 +20,7 @@ Swartz.Redis/bin/
 Swartz.Users/bin/
 Swartz.WarmupStarter/bin/
 Swartz.sln.DotSettings.user
+Swartz.Web/App_Data/Logs/
+Swartz.Web/App_Data/Sites/
+Swartz.Web/bin/
+Swartz.Web/obj/
